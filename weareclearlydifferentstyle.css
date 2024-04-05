@@ -1,0 +1,501 @@
+*{
+    padding:0;
+    margin:0;
+    box-sizing: border-box;
+}
+body {
+    background-color:white;
+
+    width:100%;
+    height:100vh;
+    background-size: cover;
+    background-position: center;
+
+}
+
+ul{
+   
+    display:flex;
+    list-style-type:none;
+
+    justify-content:center;
+    text-align:center;
+    margin-bottom:-10px;
+    padding:30px 8px 0 20px;
+    margin-left:100px;
+    
+    
+    
+
+
+}
+
+
+ a{
+    display:block;
+    width:100px;
+    text-decoration:none ;
+    background-color:white;
+    
+   
+    color:black;
+  
+    font-size:1em;
+    text-align:center;
+    font-weight:bold;
+    
+    
+   
+}
+a:hover{
+    color:grey;
+   
+}
+.client{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+}
+ul li:nth-child(2):hover .client{
+    display:block;
+   
+}
+
+
+.Practices{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+
+   
+
+   
+}
+ul li:nth-child(1):hover .Practices{
+   
+  
+    display:block;
+}
+.who{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+
+}
+ul li:nth-child(4):hover .who{
+    display:block;
+}
+
+.logo img{
+    float:left;
+    
+ 
+    height:60px;
+    width:224.2%;
+margin:13px 0 0 120px;
+   
+}
+
+.firstcontent{
+    margin-left:160.5px;
+}
+
+
+.mainpic img{
+    margin-top:17.5px;
+    height:407px;
+    width:100%;
+    border-bottom: 12px solid hsl(22, 100%, 50%);
+  
+  
+
+}
+.practicecontent{
+    background-color:#F8F9FA;
+    width:100%;
+    height:480px;
+    margin-top:-4px;
+}
+.practicecontent .spancontent{
+    color:orangered;
+    font-size:1.02rem;
+    margin-left:163px;
+
+
+
+
+}
+    
+.practicecontent .h4content1{
+    color:black;
+    font-size:1.70rem;
+  
+    margin:25px 0 0 163px;
+ 
+   
+}
+.practicecontent .h4content2{
+    color:black;
+    font-size:1.70rem;
+  
+    margin:0px 0 0 163px;
+ 
+   
+}
+.practicecontent p{
+    color:grey;
+    font-size:1.04rem;
+    line-height:1.4em;
+}
+.practicecontentbullet{
+    margin:17px 0 0 163px;
+    line-height:1.6em;
+    list-style-type:circle;
+}
+.practicecontent .para1 {
+    color:grey;
+    font-size:1.04rem;
+    line-height:0.9em;
+    margin:33px 0 0 163px;
+}
+.practicecontent .para2 {
+    color:grey;
+    font-size:1.04rem;
+    line-height:1.6em;
+    margin:1px 0 0 163px;
+}
+.practicecontentlastline .practicecontentlastlinepara{
+    color:black;
+    
+    font-size: 1.06rem;
+    font-weight:bold;
+    margin:39px 0 0 163px;
+}
+#nextcontent{
+    background-color:white;
+    height:757px;
+  
+
+
+}
+.bottomcontent{
+    float:center;
+    padding:80px 258px;
+}
+.bottomcontent h5{
+    color:orangered;
+    font-size:16px;
+    margin:0px 0 0 22px;
+}
+.bottomcontent p{
+    padding-top:30px;
+    font-size:1.08rem;
+    color:grey;
+    margin:10px 0 0 21px;;
+}
+.rscontent1 span{
+    color:black;
+    font-weight: bolder;
+    font-size:1.1rem;
+   
+}
+.rscontent1{
+    font-size:1.06rem;
+    color:grey;
+    margin:32px 0 0 174px;
+    line-height:1.4em;
+
+   
+
+}
+.rscontent1bulb {
+    font-size:1.59rem;
+    color:orangered;
+    margin-top:-85px;
+}
+.rscontent1p{
+    margin-top:10px;
+}
+.rscontent1link a{
+    width:7.5%;
+    height:34px;
+    border:1px solid black;
+    position:absolute;
+    display:flex;
+    margin:20.5px 0 0 1px;
+    padding:7px 0 0 15px;
+}
+.rscontent1link a:hover{
+    background-color:lightgrey;
+    color:none;
+    border:none;
+}
+
+.rscontent2 span{
+    font-size:1.1rem;
+    color:black;
+    font-weight:bolder;
+}
+.rscontent2{
+    float:right;
+    margin:-105px 584.5px 0 0;
+    color:grey;
+    font-size:1.06rem;
+    line-height:1.4em;
+}
+.rscontent2p{
+    margin-top:10px;
+}
+.rscontent2link a{
+    width:7.5%;
+    height:34px;
+    border:1px solid black;
+    position:absolute;
+    display:flex;
+    margin:34.5px 0 0 4px;
+    padding:7px 0 0 15px;
+}
+.rscontent2link a:hover{
+    background-color:lightgrey;
+    color:none;
+    border:none;
+}
+.rscontent3 span{
+    font-size:1.1rem;
+    font-weight:bolder;
+    color:black;
+
+}
+.rscontent3{
+    float:right;
+    margin:-130px 220px;
+    color:grey;
+    font-size:1.06rem;
+    line-height:1.4em;
+}
+.rscontent3p{
+    margin-top:10px;
+}
+.rscontent3link a{
+    width:7.5%;
+    height:34px;
+    border:1px solid black;
+    position:absolute;
+    display:flex;
+    margin:32.5px 0 0 -1px;
+    padding:7px 0 0 15px;
+}
+.rscontent3link a:hover{
+    background-color:lightgrey;
+    color:none;
+    border:none;
+}
+.rscontent4 span{
+    font-size:1.1rem;
+    font-weight:bolder;
+    color:black;
+}
+.rscontent4{
+    float:left;
+    margin:138px 0 0 279px;
+    
+    line-height:1.4em;
+    color:grey;
+    font-size:1.06rem;
+}
+.rscontent4p{
+    margin-top:10px;
+}
+
+.rscontent5 span{
+    color:black;
+    font-size:1.1rem;
+    font-weight:bolder;
+
+}
+.rscontent5{
+    float:right;
+    margin:159px 300px 0 0;
+   
+    color:grey;
+    font-size:1.06rem;
+    line-height:1.4em;
+}
+
+.rscontent5link a{
+    width:7.5%;
+    height:34px;
+    border:1px solid black;
+    position:absolute;
+    display:flex;
+    margin:24.5px 0 0 91px;
+    padding:7px 0 0 15px;
+}
+.rscontent5link a:hover{
+    background-color:lightgrey;
+    color:none;
+    border:none;
+}
+#beclearlydifferent{
+    color:black;
+    background-color:#F8F9FA; 
+ 
+
+    width:100%;
+    height:320px;
+    margin-top:-10px;
+ 
+    
+}
+ .beclearh5{
+    float:right;
+    margin:94px 590px 0 0 ;
+    font-size:3rem;
+   
+
+  
+ 
+}
+
+#beclearlydifferent a{
+    color:white;
+    background-color:black;
+    font-size:1.10rem;
+    font-weight: bolder;
+    border:1px solid black;
+    width:120px;
+    height:49px;
+    border-radius:40px;
+    float:right;
+    
+    margin: 185px  -245px 0 0  ;
+    padding-top:15px;
+    text-align: center;
+}
+#acknowledgement{
+    border-top:28px solid #FF7F50;
+    margin-top:-56px;
+}
+.acknoweledgementlogo img{
+    width:100%;
+    height:274px;
+    margin:-1px 0 0 0;
+    
+  
+}
+.acknowledgementcontent{
+
+   margin:-200px  0 0 238px;
+   color:white;
+   font-size:1.07rem;
+   line-height:1.4em;
+
+}
+.acknowledgementcontent h6{
+    font-size: 1.75rem;
+}
+.completeaddress{
+    background-color: #fff;
+    height:100px;
+
+}
+
+.addressic{
+    color:orangered;
+    justify-content: left;
+    margin-left:160px;
+    font-size:1.59rem;
+    margin-top:10px;
+    
+
+   
+}
+.address p{
+    font-size:1.06rem;
+    color:grey;
+    line-height:1.4rem;
+    margin:0 0 0 160px;
+   
+}
+.Naarm{
+    color:grey;
+    margin:5px 0 0 160px;
+    line-height:1.4;
+}
+.Naarmic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+}
+.Princeton{
+color:grey;
+float:right;
+margin:-134px 926px 0 0 ;
+line-height:1.4;
+}
+.Princetonic{
+ color:black;
+ font-weight:bolder;
+ font-size:1.07rem;
+}
+.Chennai{
+    color:grey;
+    float:right;
+    margin:-188px 700px 0 0 ;
+    line-height:1.4;
+}
+.Chennaiic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+    
+
+}
+.APKIncubationCentre {
+    color:grey;
+    float:right;
+    margin:-244px 408px 0 0 ;
+    line-height:1.4;
+    
+}
+.APKIncubationCenteric{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+   
+    
+
+}
+.Coimbatore {
+    color:grey;
+    float:right;
+    margin:-300px 168px 0 0 ;
+    line-height:1.4;
+  
+
+}
+.Coimbatoreic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+
+}
+hr{
+    width:100px;
+    margin: -211px 0 0 705px;
+    
+}
+.crystaldelta img{
+    height:60px;
+    width:13.2%;
+    margin:-12px 0 0 478px;
+}
+.mastedly{
+    height:5px;
+    width:13.2%;
+    float:right;
+    margin:-130px  501px 0 0;  
+}

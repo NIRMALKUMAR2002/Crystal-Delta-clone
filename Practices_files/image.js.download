@@ -1,0 +1,963 @@
+/******/
+
+(function($) {
+
+    /**
+     * Plugin
+     */
+
+    $.fn.imagesGrid = function(options) {
+
+        var args = arguments;
+
+        return this.each(function() {
+
+            // If options is plain object - destroy previous instance and create new
+            if ($.isPlainObject(options)) {
+                
+                if (this._imgGrid instanceof ImagesGrid) {
+                    this._imgGrid.destroy();
+                    delete this._imgGrid;
+                }
+
+                var opts = $.extend({}, $.fn.imagesGrid.defaults, options);
+                opts.element = $(this);
+                this._imgGrid = new ImagesGrid(opts);
+
+                return;
+            }
+
+            // If options is string - execute method
+            if (typeof options === 'string' && this._imgGrid instanceof ImagesGrid) {
+                switch (options) {
+                    case 'modal.open':
+                        this._imgGrid.modal.open(args[1]);
+                        break;
+                    case 'modal.close':
+                        this._imgGrid.modal.close();
+                        break;
+                    case 'destroy':
+                        this._imgGrid.destroy();
+                        delete this._imgGrid;
+                        break;
+                }
+            }
+
+        });
+
+    };
+
+    /**
+     * Plugin default options
+     */
+
+    $.fn.imagesGrid.defaults = {
+        images: [],
+        cells: 5,
+        align: false,
+        nextOnClick: true,
+        showViewAll: 'more',
+        viewAllStartIndex: 'auto',
+        loading: 'loading...',
+        getViewAllText: function(imagesCount) {
+            return 'View all ' + imagesCount + ' images';
+        },
+        onGridRendered: $.noop,
+        onGridItemRendered: $.noop,
+        onGridLoaded: $.noop,
+        onGridImageLoaded: $.noop,
+        onModalOpen: $.noop,
+        onModalClose: $.noop,
+        onModalImageClick: $.noop,
+        onModalImageUpdate: $.noop
+    };
+
+    /**
+     * ImagesGrid
+     *   opts                    - Grid options 
+     *   opts.element            - Element where to render images grid
+     *   opts.images             - Array of images. Array item can be string or object { src, alt, title, caption, thumbnail }
+     *   opts.align              - Align images with different height
+     *   opts.cells              - Maximum number of cells (from 1 to 6)
+     *   opts.showViewAll        - Show view all text:
+     *                                'more'   - show if number of images greater than number of cells
+     *                                'always' - always show
+     *                                false    - never show
+     *   opts.viewAllStartIndex  - Start image index when view all link clicked
+     *   opts.getViewAllText     - Callback function returns text for "view all images" link
+     *   opts.onGridRendered     - Callback function fired when grid items added to the DOM
+     *   opts.onGridItemRendered - Callback function fired when grid item added to the DOM
+     *   opts.onGridLoaded       - Callback function fired when grid images loaded
+     *   opts.onGridImageLoaded  - Callback function fired when grid image loaded
+     */
+
+    function ImagesGrid(opts) {
+
+        this.opts = opts || {};
+
+        this.$window = $(window);
+        this.$element = this.opts.element;
+        this.$gridItems = [];
+
+        this.modal = null;
+        this.imageLoadCount = 0;
+
+        var cells = this.opts.cells;
+        this.opts.cells = (cells < 1)? 1: (cells > 6)? 6: cells;
+
+        this.onWindowResize = this.onWindowResize.bind(this);
+        this.onImageClick = this.onImageClick.bind(this);
+
+        this.init();
+    }
+
+    ImagesGrid.prototype.init = function()  {
+
+        this.setGridClass();
+        this.renderGridItems();
+        this.createModal();
+
+        this.$window.on('resize', this.onWindowResize);
+    }
+
+    ImagesGrid.prototype.createModal = function() {
+
+        var opts = this.opts;
+
+        this.modal = new ImagesGridModal({
+            loading: opts.loading,
+            images: opts.images,
+            nextOnClick: opts.nextOnClick,
+            onModalOpen: opts.onModalOpen,
+            onModalClose: opts.onModalClose,
+            onModalImageClick: opts.onModalImageClick,
+            onModalImageUpdate: opts.onModalImageUpdate
+        });
+    }
+
+    ImagesGrid.prototype.setGridClass = function() {
+
+        var opts = this.opts,
+            imgsLen = opts.images.length,
+            cellsCount = (imgsLen < opts.cells)? imgsLen: opts.cells;
+
+        this.$element.addClass('imgs-grid imgs-grid-' + cellsCount);
+    }
+
+    ImagesGrid.prototype.renderGridItems = function() {
+
+        var opts = this.opts,
+            imgs = opts.images,
+            imgsLen = imgs.length;
+
+        if (!imgs) {
+            return;
+        }
+
+        this.$element.empty();
+        this.$gridItems = [];
+
+        for (var i = 0; i < imgsLen; ++i) {
+            if (i === opts.cells) {
+                break;
+            }
+            this.renderGridItem(imgs[i], i);
+        }
+
+        if (opts.showViewAll === 'always' || 
+            (opts.showViewAll === 'more' && imgsLen > opts.cells)
+        ) {
+            this.renderViewAll();
+        }
+
+        opts.onGridRendered(this.$element);
+    }
+
+    ImagesGrid.prototype.renderGridItem = function(image, index) {
+
+        var src = image,
+            alt = '',
+            title = '',
+            opts = this.opts,
+            _this = this;
+
+        if ($.isPlainObject(image)) {
+            src = image.thumbnail || image.src;
+            alt = image.alt || '';
+            title = image.title || '';
+        }
+
+        var item = $('<div>', {
+            class: 'imgs-grid-image',
+            click: this.onImageClick,
+            data: { index: index }
+        });
+
+        item.append(
+            $('<div>', {
+                class: 'image-wrap'
+            }).append(
+                $('<img>', {
+                    src: src,
+                    alt: alt,
+                    title: title,
+                    on: {
+                        load: function(event) {
+                            _this.onImageLoaded(event, $(this), image);
+                        }
+                    }
+                })
+            )
+        );
+
+        this.$gridItems.push(item);
+        this.$element.append(item);
+
+        opts.onGridItemRendered(item, image);
+    }
+
+    ImagesGrid.prototype.renderViewAll = function() {
+
+        var opts = this.opts;
+
+        this.$element.find('.imgs-grid-image:last .image-wrap').append(
+            $('<div>', {
+                class: 'view-all'
+            }).append(
+                $('<span>', {
+                    class: 'view-all-cover',
+                }),
+                $('<span>', {
+                    class: 'view-all-text',
+                    text: opts.getViewAllText(opts.images.length)
+                })
+            )
+        );
+    }
+
+    ImagesGrid.prototype.onWindowResize = function(event) {
+        if (this.opts.align) {
+            this.align();
+        }
+    }
+
+    ImagesGrid.prototype.onImageClick = function(event) {
+
+        var opts = this.opts,
+            img = $(event.currentTarget),
+            imageIndex;
+
+        if (img.find('.view-all').length > 0 &&
+            typeof opts.viewAllStartIndex === 'number' ) {
+            imageIndex = opts.viewAllStartIndex;
+        } else {
+            imageIndex = img.data('index');
+        }
+
+        this.modal.open(imageIndex);
+    }
+
+    ImagesGrid.prototype.onImageLoaded = function(event, imageEl, image) {
+
+        var opts = this.opts;
+
+        ++this.imageLoadCount;
+
+        opts.onGridImageLoaded(event, imageEl, image);
+
+        if (this.imageLoadCount === this.$gridItems.length) {
+            this.imageLoadCount = 0;
+            this.onAllImagesLoaded()
+        }
+    }
+
+    ImagesGrid.prototype.onAllImagesLoaded = function() {
+
+        var opts = this.opts;
+
+        if (opts.align) {
+            this.align();
+        }
+
+        opts.onGridLoaded(this.$element);
+    }
+
+    ImagesGrid.prototype.align = function() {
+
+        var itemsLen = this.$gridItems.length;
+
+        switch (itemsLen) {
+            case 2:
+            case 3:
+                this.alignItems(this.$gridItems);
+                break;
+            case 4:
+                this.alignItems(this.$gridItems.slice(0, 2));
+                this.alignItems(this.$gridItems.slice(2));
+                break;
+            case 5:
+            case 6:
+                this.alignItems(this.$gridItems.slice(0, 3));
+                this.alignItems(this.$gridItems.slice(3));
+                break;
+        }
+    }
+
+    ImagesGrid.prototype.alignItems = function(items) {
+
+        var itemsHeight = items.map(function(item) {
+            return item.find('img').height();
+        });
+
+        var normalizedHeight = Math.min.apply(null, itemsHeight);
+
+        $(items).each(function() {
+
+            var item = $(this),
+                imgWrap = item.find('.image-wrap'),
+                img = item.find('img'),
+                imgHeight = img.height();
+
+            imgWrap.height(normalizedHeight);
+
+            if (imgHeight > normalizedHeight) {
+                var top = Math.floor((imgHeight - normalizedHeight) / 2);
+                img.css({ top: -top });
+            }
+        });
+    }
+
+    ImagesGrid.prototype.destroy = function() {
+
+        this.$window.off('resize',this.onWindowResize);
+
+        this.$element.empty()
+            .removeClass('imgs-grid imgs-grid-' + this.$gridItems.length);
+
+        this.modal.destroy();
+    }
+
+    /**
+     * ImagesGridModal 
+     *  opts                    - Modal options
+     *  opts.images             - Array of images
+     *  opts.nextOnClick        - Show next image when click on modal image
+     *  opts.loading            - Image loading text
+     *  opts.onModalOpen        - Callback function called when modal opened
+     *  opts.onModalClose       - Callback function called when modal closed
+     *  opts.onModalImageClick  - Callback function called on modal image click
+     */
+
+    function ImagesGridModal(opts) {
+
+        this.opts = opts || {};
+
+        this.imageIndex = null;
+
+        this.$document = $(document);
+        this.$modal = null;
+        this.$indicator = null;
+
+        this.close = this.close.bind(this);
+        this.prev = this.prev.bind(this);
+        this.next = this.next.bind(this);
+        this.onIndicatorClick = this.onIndicatorClick.bind(this);
+        this.onImageLoaded = this.onImageLoaded.bind(this);
+        this.onKeyUp = this.onKeyUp.bind(this);
+
+        this.$document.on('keyup', this.onKeyUp);
+    }
+
+    ImagesGridModal.prototype.open = function(imageIndex) {
+
+        if (this.isOpened()) {
+            return;
+        }
+
+        this.imageIndex = parseInt(imageIndex) || 0;
+        this.render();
+    }
+
+    ImagesGridModal.prototype.close = function(event) {
+
+        if (!this.$modal) {
+            return;
+        }
+
+        var opts = this.opts;
+
+        this.$modal.animate({
+            opacity: 0
+        }, {
+            duration: 100,
+            complete: function() {
+                this.$modal.remove();
+                this.$modal = null;
+                this.$indicator = null;
+                this.imageIndex = null;
+                opts.onModalClose();
+            }.bind(this)
+        });
+    }
+
+    ImagesGridModal.prototype.isOpened = function() {
+        return (this.$modal && this.$modal.is(':visible'));
+    }
+
+    ImagesGridModal.prototype.render = function() {
+
+        var opts = this.opts;
+
+        this.renderModal();
+        this.renderCaption();
+        this.renderCloseButton();
+        this.renderInnerContainer();
+        this.renderIndicatorContainer();
+
+        this.$modal.animate({
+            opacity: 1
+        }, {
+            duration: 100,
+            complete: function() {
+                opts.onModalOpen(this.$modal, opts.images[this.imageIndex]);
+            }.bind(this)
+        });
+    }
+
+    ImagesGridModal.prototype.renderModal = function() {
+        this.$modal = $('<div>', {
+            class: 'imgs-grid-modal'
+        }).appendTo('body');
+    }
+
+    ImagesGridModal.prototype.renderCaption = function() {
+        this.$caption = $('<div>', {
+            class: 'modal-caption',
+            text: this.getImageCaption(this.imageIndex)
+        }).appendTo(this.$modal);
+    }
+
+    ImagesGridModal.prototype.renderCloseButton = function() {
+        this.$modal.append($('<div>', {
+            class: 'modal-close',
+            click: this.close
+        }));
+    }
+
+    ImagesGridModal.prototype.renderInnerContainer = function() {
+
+        var opts = this.opts,
+            image = this.getImage(this.imageIndex);
+
+        this.$modal.append(
+            $('<div>', {
+                class: 'modal-inner'
+            }).append(
+                $('<div>', {
+                    class: 'modal-image'
+                }).append(
+                    $('<img>', {
+                        src: image.src,
+                        alt: image.alt,
+                        title: image.title,
+                        on: {
+                            load: this.onImageLoaded,
+                            click: function(event) {
+                                this.onImageClick(event, $(this), image);
+                            }.bind(this)
+                        }
+                    }),
+                    $('<div>', {
+                        class: 'modal-loader',
+                        html: opts.loading
+                    })
+                ),
+                $('<div>', {
+                    class: 'modal-control left',
+                    click: this.prev
+                }).append(
+                    $('<div>', {
+                        class: 'arrow left'
+                    })
+                ),
+                $('<div>', {
+                    class: 'modal-control right',
+                    click: this.next
+                }).append(
+                    $('<div>', {
+                        class: 'arrow right'
+                    })
+                )
+            )
+        );
+
+        if (opts.images.length <= 1) {
+            this.$modal.find('.modal-control').hide();
+        }
+    }
+
+    ImagesGridModal.prototype.renderIndicatorContainer = function() {
+
+        var opts = this.opts,
+            imgsLen = opts.images.length;
+
+        if (imgsLen == 1) {
+            return;
+        }
+
+        this.$indicator = $('<div>', {
+            class: 'modal-indicator'
+        });
+
+        var list = $('<ul>'), i;
+        for (i = 0; i < imgsLen; ++i) {
+            list.append($('<li>', {
+                class: this.imageIndex == i? 'selected': '',
+                click: this.onIndicatorClick,
+                data: { index: i }
+            }));
+        }
+
+        this.$indicator.append(list);
+        this.$modal.append(this.$indicator);
+    }
+
+    ImagesGridModal.prototype.prev = function() {
+
+        var imgsLen = this.opts.images.length;
+
+        if (this.imageIndex > 0) {
+            --this.imageIndex;
+        } else {
+            this.imageIndex = imgsLen - 1;
+        }
+
+        this.updateImage();
+    }
+
+    ImagesGridModal.prototype.next = function() {
+
+        var imgsLen = this.opts.images.length;
+
+        if (this.imageIndex < imgsLen - 1) {
+            ++this.imageIndex;
+        } else {
+            this.imageIndex = 0;
+        }
+
+        this.updateImage();
+    }
+
+    ImagesGridModal.prototype.updateImage = function() {
+
+        var opts = this.opts,
+            image = this.getImage(this.imageIndex),
+            imageEl = this.$modal.find('.modal-image img');
+
+        imageEl.attr({
+            src: image.src,
+            alt: image.alt,
+            title: image.title
+        });
+
+        this.$modal.find('.modal-caption').text(
+            this.getImageCaption(this.imageIndex) );
+
+        if (this.$indicator) {
+            var indicatorList = this.$indicator.find('ul');
+            indicatorList.children().removeClass('selected');
+            indicatorList.children().eq(this.imageIndex).addClass('selected');
+        }
+
+        this.showLoader();
+
+        opts.onModalImageUpdate(imageEl, image);
+    }
+
+    ImagesGridModal.prototype.onImageClick = function(event, imageEl, image) {
+
+        var opts = this.opts;
+
+        if (opts.nextOnClick) {
+            this.next();
+        }
+
+        opts.onModalImageClick(event, imageEl, image);
+    }
+
+    ImagesGridModal.prototype.onImageLoaded = function() {
+        this.hideLoader();
+    }
+
+    ImagesGridModal.prototype.onIndicatorClick = function(event) {
+        var index = $(event.target).data('index');
+        this.imageIndex = index;
+        this.updateImage();
+    }
+
+    ImagesGridModal.prototype.onKeyUp = function(event) {
+
+        if (!this.$modal) {
+            return;
+        }
+
+        switch (event.keyCode) {
+            case 27: // Esc
+                this.close();
+                break;
+            case 37: // Left arrow
+                this.prev();
+                break;
+            case 39: // Right arrow
+                this.next();
+                break;
+        }
+    }
+
+    ImagesGridModal.prototype.getImage = function(index) {
+
+        var opts = this.opts,
+            image = opts.images[index];
+
+        if ($.isPlainObject(image)) {
+            return image;
+        } else {
+            return { src: image, alt: '', title: '' }
+        }
+    }
+
+    ImagesGridModal.prototype.getImageCaption = function(imgIndex) {
+        var img = this.getImage(imgIndex);
+        return img.caption || '';
+    }
+
+    ImagesGridModal.prototype.showLoader = function() {
+        if (this.$modal) {
+            this.$modal.find('.modal-image img').hide();
+            this.$modal.find('.modal-loader').show();
+        }
+    }
+
+    ImagesGridModal.prototype.hideLoader = function() {
+        if (this.$modal) {
+            this.$modal.find('.modal-image img').show();
+            this.$modal.find('.modal-loader').hide();
+        }
+    }
+
+    ImagesGridModal.prototype.destroy = function() {
+        this.$document.off('keyup', this.onKeyUp);
+        this.close();
+    }
+
+    window.imagesGrid = $.fn.imagesGrid;
+     
+    // facebook Gallery code
+    $('.sumo-gallery').each(function(){ 
+
+        const set = $(this).data('set');
+
+        const dataset = window[set][0];
+
+
+        const images = dataset['images'];
+        const cwp_num_visible =  dataset['cwp_num_visible'];
+
+
+
+        $(this).imagesGrid({
+            images,
+            cells: ~~cwp_num_visible,
+            onModalOpen: () => {
+                $('.imgs-grid-modal .modal-close').append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 492 492"><path d="M300.188 246L484.14 62.04c5.06-5.064 7.852-11.82 7.86-19.024 0-7.208-2.792-13.972-7.86-19.028L468.02 7.872C462.952 2.796 456.196.016 448.984.016c-7.2 0-13.956 2.78-19.024 7.856L246.008 191.82 62.048 7.872C56.988 2.796 50.228.016 43.02.016c-7.2 0-13.96 2.78-19.02 7.856L7.872 23.988c-10.496 10.496-10.496 27.568 0 38.052L191.828 246 7.872 429.952C2.808 435.024.02 441.78.02 448.984c0 7.204 2.788 13.96 7.852 19.028l16.124 16.116c5.06 5.072 11.824 7.856 19.02 7.856 7.208 0 13.968-2.784 19.028-7.856l183.96-183.952 183.952 183.952c5.068 5.072 11.824 7.856 19.024 7.856h.008c7.204 0 13.96-2.784 19.028-7.856l16.12-16.116c5.06-5.064 7.852-11.824 7.852-19.028 0-7.204-2.792-13.96-7.852-19.028L300.188 246z"/></svg>');
+                $('.modal-control .arrow.left').append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 443.52 443.52"><path d="M143.492 221.863L336.226 29.129c6.663-6.664 6.663-17.468 0-24.132-6.665-6.662-17.468-6.662-24.132 0l-204.8 204.8c-6.662 6.664-6.662 17.468 0 24.132l204.8 204.8c6.78 6.548 17.584 6.36 24.132-.42 6.387-6.614 6.387-17.099 0-23.712L143.492 221.863z"/></svg>');
+                $('.modal-control .arrow.right').append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 443.52 443.52"><path d="M336.226 209.591l-204.8-204.8c-6.78-6.548-17.584-6.36-24.132.42-6.388 6.614-6.388 17.099 0 23.712l192.734 192.734-192.734 192.734c-6.663 6.664-6.663 17.468 0 24.132 6.665 6.663 17.468 6.663 24.132 0l204.8-204.8c6.663-6.665 6.663-17.468 0-24.132z"/></svg>');
+            } 
+        });
+
+    });
+
+})(jQuery);
+
+
+//tilt image code
+'use strict';
+(function ($) {
+    $.fn.tilt = function (options) {
+        var requestTick = function requestTick() {
+            if (this.ticking) return;
+            requestAnimationFrame(updateTransforms.bind(this));
+            this.ticking = true;
+        };
+
+        var bindEvents = function bindEvents() {
+            var _this = this;
+            $(this).on('mousemove', mouseMove);
+            $(this).on('mouseenter', mouseEnter);
+            if (this.settings.reset) $(this).on('mouseleave', mouseLeave);
+            if (this.settings.glare) $(window).on('resize', updateGlareSize.bind(_this));
+        };
+
+        var setTransition = function setTransition() {
+            var _this2 = this;
+
+            if (this.timeout !== undefined) clearTimeout(this.timeout);
+            $(this).css({ 'transition': this.settings.speed + 'ms ' + this.settings.easing });
+            if (this.settings.glare) this.glareElement.css({ 'transition': 'opacity ' + this.settings.speed + 'ms ' + this.settings.easing });
+            this.timeout = setTimeout(function () {
+                $(_this2).css({ 'transition': '' });
+                if (_this2.settings.glare) _this2.glareElement.css({ 'transition': '' });
+            }, this.settings.speed);
+        };
+
+        var mouseEnter = function mouseEnter(event) {
+            this.ticking = false;
+            $(this).css({ 'will-change': 'transform' });
+            setTransition.call(this);
+            $(this).trigger("tilt.mouseEnter");
+        };
+
+        /**
+         * Return the x,y position of the mouse on the tilt element
+         * @returns {{x: *, y: *}}
+         */
+        var getMousePositions = function getMousePositions(event) {
+            if (typeof event === "undefined") {
+                event = {
+                    pageX: $(this).offset().left + $(this).outerWidth() / 2,
+                    pageY: $(this).offset().top + $(this).outerHeight() / 2
+                };
+            }
+            return { x: event.pageX, y: event.pageY };
+        };
+
+        var mouseMove = function mouseMove(event) {
+            this.mousePositions = getMousePositions(event);
+            requestTick.call(this);
+        };
+
+        var mouseLeave = function mouseLeave() {
+            setTransition.call(this);
+            this.reset = true;
+            requestTick.call(this);
+
+            // Trigger change event
+            $(this).trigger("tilt.mouseLeave");
+        };
+
+        /**
+         * Get tilt values
+         *
+         * @returns {{x: tilt value, y: tilt value}}
+         */
+        var getValues = function getValues() {
+            var width = $(this).outerWidth();
+            var height = $(this).outerHeight();
+            var left = $(this).offset().left;
+            var top = $(this).offset().top;
+            var percentageX = (this.mousePositions.x - left) / width;
+            var percentageY = (this.mousePositions.y - top) / height;
+            // x or y position inside instance / width of instance = percentage of position inside instance * the max tilt value
+            var tiltX = (this.settings.maxTilt / 2 - percentageX * this.settings.maxTilt).toFixed(2);
+            var tiltY = (percentageY * this.settings.maxTilt - this.settings.maxTilt / 2).toFixed(2);
+            // angle
+            var angle = Math.atan2(this.mousePositions.x - (left + width / 2), -(this.mousePositions.y - (top + height / 2))) * (180 / Math.PI);
+            // Return x & y tilt values
+            return { tiltX: tiltX, tiltY: tiltY, 'percentageX': percentageX * 100, 'percentageY': percentageY * 100, angle: angle };
+        };
+
+        /**
+         * Update tilt transforms on mousemove
+         */
+        var updateTransforms = function updateTransforms() {
+            this.transforms = getValues.call(this);
+
+            if (this.reset) {
+                this.reset = false;
+                $(this).css('transform', 'perspective(' + this.settings.perspective + 'px) rotateX(0deg) rotateY(0deg)');
+
+                // Rotate glare if enabled
+                if (this.settings.glare) {
+                    this.glareElement.css('transform', 'rotate(180deg) translate(-50%, -50%)');
+                    this.glareElement.css('opacity', '0');
+                }
+
+                return;
+            } else {
+                $(this).css('transform', 'perspective(' + this.settings.perspective + 'px) rotateX(' + (this.settings.axis === 'x' ? 0 : this.transforms.tiltY) + 'deg) rotateY(' + (this.settings.axis === 'y' ? 0 : this.transforms.tiltX) + 'deg) scale3d(' + this.settings.scale + ',' + this.settings.scale + ',' + this.settings.scale + ')');
+
+                // Rotate glare if enabled
+                if (this.settings.glare) {
+                    this.glareElement.css('transform', 'rotate(' + this.transforms.angle + 'deg) translate(-50%, -50%)');
+                    this.glareElement.css('opacity', '' + this.transforms.percentageY * this.settings.maxGlare / 100);
+                }
+            }
+
+            // Trigger change event
+            $(this).trigger("change", [this.transforms]);
+
+            this.ticking = false;
+        };
+
+        /**
+         * Prepare elements
+         */
+        var prepareGlare = function prepareGlare() {
+            var glarePrerender = this.settings.glarePrerender;
+
+            // If option pre-render is enabled we assume all html/css is present for an optimal glare effect.
+            if (!glarePrerender)
+                // Create glare element
+                $(this).append('<div class="js-tilt-glare"><div class="js-tilt-glare-inner"></div></div>');
+
+            // Store glare selector if glare is enabled
+            this.glareElementWrapper = $(this).find(".js-tilt-glare");
+            this.glareElement = $(this).find(".js-tilt-glare-inner");
+
+            // Remember? We assume all css is already set, so just return
+            if (glarePrerender) return;
+
+            // Abstracted re-usable glare styles
+            var stretch = {
+                'position': 'absolute',
+                'top': '0',
+                'left': '0',
+                'width': '100%',
+                'height': '100%'
+            };
+
+            // Style glare wrapper
+            this.glareElementWrapper.css(stretch).css({
+                'overflow': 'hidden'
+            });
+
+            // Style glare element
+            this.glareElement.css({
+                'position': 'absolute',
+                'top': '50%',
+                'left': '50%',
+                'pointer-events': 'none',
+                'background-image': 'linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)',
+                'width': '' + $(this).outerWidth() * 2,
+                'height': '' + $(this).outerWidth() * 2,
+                'transform': 'rotate(180deg) translate(-50%, -50%)',
+                'transform-origin': '0% 0%',
+                'opacity': '0'
+            });
+        };
+
+        /**
+         * Update glare on resize
+         */
+        var updateGlareSize = function updateGlareSize() {
+            this.glareElement.css({
+                'width': '' + $(this).outerWidth() * 2,
+                'height': '' + $(this).outerWidth() * 2
+            });
+        };
+
+        /**
+         * Public methods
+         */
+        $.fn.tilt.destroy = function () {
+            $(this).each(function () {
+                $(this).find('.js-tilt-glare').remove();
+                $(this).css({ 'will-change': '', 'transform': '' });
+                $(this).off('mousemove mouseenter mouseleave');
+            });
+        };
+
+        $.fn.tilt.getValues = function () {
+            var results = [];
+            $(this).each(function () {
+                this.mousePositions = getMousePositions.call(this);
+                results.push(getValues.call(this));
+            });
+            return results;
+        };
+
+        $.fn.tilt.reset = function () {
+            $(this).each(function () {
+                var _this3 = this;
+
+                this.mousePositions = getMousePositions.call(this);
+                this.settings = $(this).data('settings');
+                mouseLeave.call(this);
+                setTimeout(function () {
+                    _this3.reset = false;
+                }, this.settings.transition);
+            });
+        };
+
+        /**
+         * Loop every instance
+         */
+        return this.each(function () {
+            var _this4 = this;
+
+            /**
+             * Default settings merged with user settings
+             * Can be set trough data attributes or as parameter.
+             * @type {*}
+             */
+            this.settings = $.extend({
+                maxTilt: $(this).is('[data-tilt-max]') ? $(this).data('tilt-max') : 20,
+                perspective: $(this).is('[data-tilt-perspective]') ? $(this).data('tilt-perspective') : 300,
+                easing: $(this).is('[data-tilt-easing]') ? $(this).data('tilt-easing') : 'cubic-bezier(.03,.98,.52,.99)',
+                scale: $(this).is('[data-tilt-scale]') ? $(this).data('tilt-scale') : '1',
+                speed: $(this).is('[data-tilt-speed]') ? $(this).data('tilt-speed') : '400',
+                transition: $(this).is('[data-tilt-transition]') ? $(this).data('tilt-transition') : true,
+                axis: $(this).is('[data-tilt-axis]') ? $(this).data('tilt-axis') : null,
+                reset: $(this).is('[data-tilt-reset]') ? $(this).data('tilt-reset') : true,
+                glare: $(this).is('[data-tilt-glare]') ? $(this).data('tilt-glare') : false,
+                maxGlare: $(this).is('[data-tilt-maxglare]') ? $(this).data('tilt-maxglare') : 1
+            }, options);
+
+            this.init = function () {
+                // Store settings
+                $(_this4).data('settings', _this4.settings);
+
+                // Prepare element
+                if (_this4.settings.glare) prepareGlare.call(_this4);
+
+                // Bind events
+                bindEvents.call(_this4);
+            };
+
+            // Init
+            this.init();
+        });
+    };
+
+    /**
+     * Auto load
+     */
+    $('[data-tilt]').tilt();
+
+
+    $('.tilt_image_container').each(function() {
+      const tiltMAx = $(this).data('max');
+      const tiltPerspective = $(this).data('perspective');
+      const tiltSpeed = $(this).data('speed');
+      const tiltScale = $(this).data('scale');
+      const tiltGalre = $(this).data('tilt_glare');
+      const uniqueClass = $(this).data('class_unique');
+    
+      $(`.${uniqueClass}.tilt_image_container`).tilt({
+        maxTilt: tiltMAx,
+        perspective: tiltPerspective,
+        easing: "cubic-bezier(.03,.98,.52,.99)",
+        speed: tiltSpeed,
+        glare: tiltGalre,
+        scale: tiltScale
+      });
+    });
+    window.tilt = $.fn.tilt;
+})(jQuery);
+
+
+
+   
+
+
+

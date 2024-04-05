@@ -1,0 +1,289 @@
+*{
+    padding:0;
+    margin:0;
+    box-sizing: border-box;
+}
+body {
+    background-color:white;
+
+    width:100%;
+    height:100vh;
+    background-size: cover;
+    background-position: center;
+
+}
+
+ul{
+   
+    display:flex;
+    list-style-type:none;
+
+    justify-content:center;
+    text-align:center;
+    margin-bottom:-10px;
+    padding:30px 8px 0 20px;
+    margin-left:100px;
+    
+    
+    
+
+
+}
+
+
+ a{
+    display:block;
+    width:100px;
+    text-decoration:none ;
+    background-color:white;
+    
+   
+    color:black;
+  
+    font-size:1em;
+    text-align:center;
+    font-weight:bold;
+    
+    
+   
+}
+a:hover{
+    color:grey;
+   
+}
+.client{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+}
+ul li:nth-child(2):hover .client{
+    display:block;
+   
+}
+
+
+.Practices{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+
+   
+
+   
+}
+ul li:nth-child(1):hover .Practices{
+   
+  
+    display:block;
+}
+.who{
+    list-style-type:none;
+    display:none;
+    margin-top:5px;
+    position:absolute;
+
+}
+ul li:nth-child(4):hover .who{
+    display:block;
+}
+
+.logo img{
+    float:left;
+    
+ 
+    height:60px;
+    width:224.2%;
+margin:13px 0 0 120px;
+   
+}
+.topcontent{
+    background-image: url(leafcloud.png);
+    width:100%;
+    height:533px;
+    margin:40px 0 0 0 ;
+ 
+}
+.toppara1{
+    float:right;
+    margin:99px 880px  0 0 ;
+    color:white;
+    background-color: transparent;
+    font-size:2.20rem;
+    font-weight:bold;
+    
+}
+.toppara2{
+    float:right;
+    margin:2px 943px  0 0 ;
+    color:white;
+    background-color: transparent;
+
+    font-size:2.20rem;
+    font-weight:bold;
+    
+
+}
+.toppara3{
+    float:right;
+    margin:1px 1124px  0 0 ;
+    color:white;
+    background-color: transparent;
+
+    font-size:2.20rem;
+    font-weight:bold;
+}
+ .topcontentlinkstart{
+    color:white;
+    background-color: transparent;
+    font-size:1.20rem;
+    float:right;
+    margin:40px 1185px  0 0;
+    display:flex;
+    width:20%;
+    border:0.5px solid white;
+    width:11%;
+    height:30px;
+    padding:5px 0 0 15px;
+
+
+}
+.topcontent{
+    border-bottom:13px solid orangered;
+}
+
+
+
+.whatwedospan{
+    color:orangered;
+    font-size:1.04rem;
+    margin:65px 0 0 100px;
+}
+.whatwedodarkcontent{
+    font-size:2.01rem;
+    margin:19px 0 0 100px;
+}
+#acknowledgement{
+    border-top:28px solid #FF7F50;
+    margin-top:36px;
+}
+.acknoweledgementlogo img{
+    width:100%;
+    height:274px;
+    margin:-01px 0 0 0;
+    
+  
+}
+.acknowledgementcontent{
+
+   margin:-200px  0 0 238px;
+   color:white;
+   font-size:1.07rem;
+   line-height:1.4em;
+
+}
+.acknowledgementcontent h6{
+    font-size: 1.75rem;
+}
+
+.addressic{
+    color:orangered;
+    justify-content: left;
+    margin-left:160px;
+    font-size:1.59rem;
+    margin-top:10px;
+    
+
+   
+}
+.address p{
+    font-size:1.06rem;
+    color:grey;
+    line-height:1.4rem;
+    margin:0 0 0 160px;
+   
+}
+.Naarm{
+    color:grey;
+    margin:5px 0 0 160px;
+    line-height:1.4;
+}
+.Naarmic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+}
+.Princeton{
+color:grey;
+float:right;
+margin:-134px 926px 0 0 ;
+line-height:1.4;
+}
+.Princetonic{
+ color:black;
+ font-weight:bolder;
+ font-size:1.07rem;
+}
+.Chennai{
+    color:grey;
+    float:right;
+    margin:-188px 700px 0 0 ;
+    line-height:1.4;
+}
+.Chennaiic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+    
+
+}
+.APKIncubationCentre {
+    color:grey;
+    float:right;
+    margin:-244px 408px 0 0 ;
+    line-height:1.4;
+    
+}
+.APKIncubationCenteric{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+   
+    
+
+}
+.Coimbatore {
+    color:grey;
+    float:right;
+    margin:-300px 168px 0 0 ;
+    line-height:1.4;
+  
+
+}
+.Coimbatoreic{
+    color:black;
+    font-weight:bolder;
+    font-size:1.07rem;
+
+}
+hr{
+    width:100px;
+    margin: -211px 0 0 705px;
+    
+}
+.crystaldelta img{
+    height:60px;
+    width:13.2%;
+    margin:-12px 0 0 478px;
+}
+.mastedly{
+    height:5px;
+    width:13.2%;
+    float:right;
+    margin:-130px  501px 0 0;  
+}
+.bulb i{
+   font-size:1.7rem;
+   transform:rotate(right);
+}
